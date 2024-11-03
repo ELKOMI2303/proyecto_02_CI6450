@@ -1,4 +1,5 @@
 import { Vector } from "./Vector.js";
+import { Character } from "./Character.js";
 
 export class Staticc {
   constructor(position = new Vector(), orientation) {
@@ -48,3 +49,30 @@ export class KinematicSteeringBehaviors {
       }
     }
   }
+
+
+  export class KinematicCharacter {
+    constructor(character, scene) {
+      this.character = character;
+      this.scene = scene;
+      this.kinematicSteering = new KinematicSteeringBehaviors(
+        new Staticc(new Vector(character.sprite.x, character.sprite.y), 0),
+        new Vector(0, 0),
+        0
+      );
+    }
+  
+    showExclamationMark() {
+      this.character.showExclamationMark();
+    }
+  
+    hideExclamationMark() {
+      this.character.hideExclamationMark();
+    }
+  
+    update(steering, time, maxSpeed) {
+      this.kinematicSteering.update(steering, time, maxSpeed);
+      this.character.update();
+    }
+  }
+  

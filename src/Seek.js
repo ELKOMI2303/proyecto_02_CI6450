@@ -27,11 +27,17 @@ export class Seek {
   
       result.linear = result.linear.scale(this.maxAcceleration);
   
-      this.character.orientation = newOrientation(
-        this.character.orientation,
-        this.character.velocity
-      );
+      // this.character.orientation = newOrientation(
+      //   this.character.orientation,
+      //   this.character.velocity
+      // );
   
+
+      // Actualiza la orientación del personaje hacia el objetivo
+      this.character.orientation = Math.atan2(
+        this.target.position.y - this.character.position.y,
+        this.target.position.x - this.character.position.x
+      );
       result.angular = 0;
   
       return result;
