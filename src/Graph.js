@@ -50,7 +50,6 @@ export class Graph {
     }
     // Devuelve las conexiones salientes de un nodo dado
     getConnections(fromNode) {
-        console.log(fromNode);
         if (this.nodes.has(fromNode.name)) {
             return this.nodes.get(fromNode.name).connections;
         }

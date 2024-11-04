@@ -1,9 +1,16 @@
 import { Graph, Node, Connection } from "../src/Graph.js";
-import { Vector } from "./Vector.js";
-import { canSeePlayer, isPlayerFarAway } from "./Helpers.js";
 import { KinematicCharacter } from "./Kinematic.js";
-
-import { getNextTilePosition, checkCollides } from "./Helpers.js";
+import {
+  canSeePlayer,
+  isPlayerFarAway,
+  getNextTilePosition,
+  checkCollides,
+  checkForNearbyPokeball,
+  checkForPokeballAtPosition,
+  checkPokebollDistance,
+  nearCharacter,
+  checkPokebollDistance2
+} from "./Helpers.js";
 
 import Phaser from "phaser";
 import { Transition, StateMachine } from "./StateMachine.js";
@@ -14,9 +21,10 @@ import {
   ReturnState,
   ChaseState,
 } from "./MachineCharacter2.js";
-import { ExploreState } from "./MachineCharacter1.js";
+import { ExploreState, AlarmStatePokeball,CollectionStatePokeball } from "./MachineCharacter1.js";
 
-import { checkForNearbyPokeball } from "./Helpers.js";
+import { DetectState,detectionNpcState,PlacementStatePokeball} from "./MachineCharacter3.js";
+import { SimpleQueue } from "./PriorityQueue.js";
 
 var currentFrame;
 var map;
@@ -56,6 +64,9 @@ function startPhaserGame(option) {
 
     this.load.image("exclamation", "./public/exclamation.png");
 
+    
+    this.load.image("collection", "./public/collection.png");
+
     this.load.spritesheet("player", "./public/player.png", {
       frameWidth: 64,
       frameHeight: 64,
@@ -67,6 +78,11 @@ function startPhaserGame(option) {
     });
 
     this.load.spritesheet("trainer2", "./public/trainer2.png", {
+      frameWidth: 64,
+      frameHeight: 64,
+    });
+
+    this.load.spritesheet("trainer3", "./public/trainer3.png", {
       frameWidth: 64,
       frameHeight: 64,
     });
@@ -276,6 +292,41 @@ function startPhaserGame(option) {
       repeat: -1,
     });
 
+    //#####################################################################
+
+
+    this.anims.create({
+      key: "walk_down3",
+      frames: this.anims.generateFrameNumbers("trainer3", { start: 0, end: 3 }),
+      frameRate: 10,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: "walk_left3",
+      frames: this.anims.generateFrameNumbers("trainer3", { start: 4, end: 7 }),
+      frameRate: 10,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: "walk_right3",
+      frames: this.anims.generateFrameNumbers("trainer3", {
+        start: 8,
+        end: 11,
+      }),
+      frameRate: 10,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: "walk_up3",
+      frames: this.anims.generateFrameNumbers("trainer3", {
+        start: 12,
+        end: 15,
+      }),
+      frameRate: 10,
+      repeat: -1,
+    });
+
+
     const player = this.physics.add
       .sprite(3 * 16, 10 * 16, "player")
       .setScale(0.35);
@@ -283,12 +334,13 @@ function startPhaserGame(option) {
     this.player = player;
     this.cursors = cursors;
     this.map = map;
+    const priorityQueue = new SimpleQueue();
     //#############################CHARACTER 1 #######################################
     const characterSprite1 = this.physics.add
-      .sprite(7 * 16, 21 * 16, "trainer1")
+      .sprite(10 * 16, 21 * 16, "trainer1")
       .setScale(0.35);
 
-    this.character1= characterSprite1
+    this.character1 = characterSprite1;
     const character1 = new Character(characterSprite1);
     this.kinematiccharacter1 = new KinematicCharacter(character1, this);
 
@@ -300,7 +352,15 @@ function startPhaserGame(option) {
       currentFrame
     );
 
-    // const alarm1 = new AlarmState1(this.kinematiccharacter1, player, currentFrame);
+    const alarmPokeball = new AlarmStatePokeball(
+      this.kinematiccharacter1,
+      graph,
+      map,
+      currentFrame
+    );
+
+    const  collection = new  CollectionStatePokeball(this.kinematiccharacter1,map,this,priorityQueue);
+
 
     explore.addTransition(
       new Transition(
@@ -309,11 +369,46 @@ function startPhaserGame(option) {
             this.kinematiccharacter1.kinematicSteering.position,
             map
           ),
-        null
+        alarmPokeball
+      )
+    );
+
+    alarmPokeball.addTransition(
+      new Transition(
+        () =>
+          !checkForPokeballAtPosition(
+            this.kinematiccharacter1.pokeballPosition,
+            map
+          ), // Verificar si la pokebola ya no está
+        explore // Volver al estado de exploración
+      )
+    );
+
+
+    alarmPokeball.addTransition(
+      new Transition(
+        () =>
+          checkPokebollDistance(
+            this.kinematiccharacter1
+          ), // Verificar si la pokebola ya no está
+       collection // Volver al estado de exploración
+      )
+    );
+
+    collection.addTransition(
+      new Transition(
+        () =>
+          !checkForPokeballAtPosition(
+            this.kinematiccharacter1.pokeballPosition,
+            map
+          ), // Verificar si la pokebola ya no está
+        explore // Volver al estado de exploración
       )
     );
 
     this.explore = explore;
+    this.alarmPokeball = alarmPokeball
+    this.collection = collection
 
     this.stateMachine1 = new StateMachine(explore);
 
@@ -366,7 +461,7 @@ function startPhaserGame(option) {
       new Transition(
         () =>
           canSeePlayer(this.kinematiccharacter2, player) &&
-          this.kinematiccharacter.scene.time.now - alarm.alarmStartTime >= 5000,
+          this.kinematiccharacter2.scene.time.now - alarm.alarmStartTime >= 5000,
         chase
       )
     ); // De alarma a persecución
@@ -384,7 +479,81 @@ function startPhaserGame(option) {
     ); // De regreso a patrullaje
 
     this.stateMachine2 = new StateMachine(patrol);
-    //#######################################CHARACTER 2 #########################################
+    //#######################################CHARACTER 3 #########################################
+    const characterSprite3 = this.physics.add
+    .sprite(15 * 16, 22 * 16, "trainer3")
+    .setScale(0.35);
+  this.character3 = characterSprite3;
+
+  const character3 = new Character(characterSprite3);
+  this.kinematiccharacter3 = new KinematicCharacter(character3, this);
+
+ 
+  const detect = new  DetectState(this.kinematiccharacter3,graph, this.add.graphics(),
+  map,
+  currentFrame,priorityQueue);
+  this.detect = detect;
+
+  const detectionNpc = new  detectionNpcState(this.kinematiccharacter3,this.kinematiccharacter2,currentFrame);
+  this.detectionNpc = detectionNpc
+
+  const placement = new PlacementStatePokeball(this.kinematiccharacter3,map,this,priorityQueue);
+
+  this.placement = placement;
+
+
+
+
+
+  
+  detect.addTransition(
+    new Transition(
+      () =>
+       nearCharacter(
+          this.kinematiccharacter3,
+          this.kinematiccharacter1.kinematicSteering.position
+        ),
+        detectionNpc
+      )
+    );
+
+
+    detectionNpc.addTransition(
+      new Transition(
+        () =>
+         !nearCharacter(
+            this.kinematiccharacter3,
+            this.kinematiccharacter1.kinematicSteering.position
+          ),
+          detect
+        )
+      );
+
+      detect.addTransition(
+        new Transition(
+          () =>
+            checkPokebollDistance2(
+              this.kinematiccharacter3,
+              this.kinematiccharacter3.pokeballPosition,
+              map,
+            ), // Verificar si la pokebola ya no está
+         placement // Volver al estado de exploración
+        )
+      );
+
+
+      placement.addTransition(
+        new Transition(
+          () =>
+            checkForPokeballAtPosition(
+              this.kinematiccharacter3.pokeballPosition,
+              map
+            ), // Verificar si la pokebola existe
+          detect 
+        )
+      );
+    //##########################################
+    this.stateMachine3 = new StateMachine(detect);
   }
 
   function updateGame(time, delta) {
@@ -394,12 +563,18 @@ function startPhaserGame(option) {
       map,
       character1,
       character2,
+      character3,
       kinematiccharacter2,
       chase,
       patrol,
       alarm,
       kinematiccharacter1,
-      explore
+      explore,
+      alarmPokeball,
+      detectionNpc,
+      detect,
+      collection,
+      kinematiccharacter3
     } = this;
 
     currentFrame = delta / 1000;
@@ -418,7 +593,9 @@ function startPhaserGame(option) {
     chase.setCurrentFrame(currentFrame);
     patrol.setCurrentFrame(currentFrame);
     explore.setCurrentFrame(currentFrame);
-
+    alarmPokeball.setCurrentFrame(currentFrame);
+    detect.setCurrentFrame(currentFrame);
+    detectionNpc.setCurrentFrame(currentFrame);
     player.setVelocity(0);
     if (!collides) {
       // Si no hay colisión, permitir el movimiento del jugador
@@ -449,9 +626,7 @@ function startPhaserGame(option) {
     character1.y = kinematiccharacter1.kinematicSteering.position.y;
 
     setRotation1(kinematiccharacter1.kinematicSteering.orientation, character1);
-
-
-
+//##############################CHARACTER 2#########################################################
     // Aquí actualizamos la máquina de estados
     const actions2 = this.stateMachine2.update();
 
@@ -462,8 +637,22 @@ function startPhaserGame(option) {
     character2.y = kinematiccharacter2.kinematicSteering.position.y;
 
     setRotation2(kinematiccharacter2.kinematicSteering.orientation, character2);
-  }
 
+    ////#########################################
+    const actions3 = this.stateMachine3.update();
+
+    // Ejecutar las acciones devueltas por la máquina de estados
+    actions3.forEach((action) => action());
+
+    character3.x = kinematiccharacter3.kinematicSteering.position.x;
+    character3.y = kinematiccharacter3.kinematicSteering.position.y;
+
+    setRotation3(kinematiccharacter3.kinematicSteering.orientation, character3);
+//###############################################################################
+
+
+
+  }
   function returnToMenu() {
     // Destruir la instancia del juego
     game.destroy(true);
@@ -486,7 +675,6 @@ function setRotation2(orientation, character) {
   }
 }
 
-
 function setRotation1(orientation, character) {
   // Ajustar los rangos de orientación a direcciones específicas
   if (orientation >= -Math.PI / 4 && orientation < Math.PI / 4) {
@@ -497,6 +685,19 @@ function setRotation1(orientation, character) {
     character.anims.play("walk_down1", true); // Abajo
   } else {
     character.anims.play("walk_left1", true); // Izquierda
+  }
+}
+
+function setRotation3(orientation, character) {
+  // Ajustar los rangos de orientación a direcciones específicas
+  if (orientation >= -Math.PI / 4 && orientation < Math.PI / 4) {
+    character.anims.play("walk_right3", true); // Derecha
+  } else if (orientation >= Math.PI / 4 && orientation < (3 * Math.PI) / 4) {
+    character.anims.play("walk_up3", true); // Arriba
+  } else if (orientation >= (-3 * Math.PI) / 4 && orientation < -Math.PI / 4) {
+    character.anims.play("walk_down3", true); // Abajo
+  } else {
+    character.anims.play("walk_left3", true); // Izquierda
   }
 }
 
