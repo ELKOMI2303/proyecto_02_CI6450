@@ -50,7 +50,7 @@ export class Character {
         this.exclamationMark.y=  this.sprite.y - 20; // Ajusta la posición según sea necesario
       }
 
-      if (this.collectionMark.visible) {
+      if (this.collectionMark) {
         this.collectionMark.x = this.sprite.x;
         this.collectionMark.y=  this.sprite.y - 20; // Ajusta la posición según sea necesario
       }

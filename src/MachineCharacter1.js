@@ -19,6 +19,8 @@ export class ExploreState extends State {
         this.currentTargetIndex = 0; // Índice de destino actual
         this.routeGraphics = graphic; // Gráficos para la ruta
         this.routeGraphics.lineStyle(3, 0x0000ff, 1); // Estilo de línea azul
+        this.targetX = null;
+        this.targetY = null;
 
         this.addAction(() => this.explore());
         this.addEntryAction(() => {    
@@ -79,13 +81,16 @@ export class ExploreState extends State {
         }
 
         const currentEdge = this.shortestPath[this.currentTargetIndex];
-        const targetNodeName = currentEdge.getToNode().name;
-        const targetNode = this.graph.getNode(targetNodeName);
-        const targetX = targetNode.x * 16; // Convertir tile a píxeles
-        const targetY = targetNode.y * 16; // Convertir tile a píxeles
+        if(currentEdge!==undefined){
+
+            const targetNodeName = currentEdge.getToNode().name;
+            const targetNode = this.graph.getNode(targetNodeName);
+            this.targetX = targetNode.x * 16; // Convertir tile a píxeles
+            this.targetY = targetNode.y * 16; // Convertir tile a píxeles
+        }
 
         const targetKinematic = {
-            position: new Vector(targetX, targetY),
+            position: new Vector(this.targetX, this.targetY),
             velocity: new Vector(0, 0),
             orientation: this.character.kinematicSteering.orientation // Mantener la orientación actual
         };
@@ -106,8 +111,8 @@ export class ExploreState extends State {
         const currentPosition = this.character.kinematicSteering.position;
 
         // Calcular la dirección hacia el siguiente nodo
-        const directionX = targetX - currentPosition.x;
-        const directionY = targetY - currentPosition.y;
+        const directionX = this.targetX - currentPosition.x;
+        const directionY = this.targetY - currentPosition.y;
 
         // Calcular la distancia al siguiente nodo
         const distance = Math.sqrt(directionX ** 2 + directionY ** 2);
@@ -119,7 +124,8 @@ export class ExploreState extends State {
             if (this.currentTargetIndex >= this.shortestPath.length) {
                 this.currentTarget = this.getRandomTarget(); // Obtener un nuevo objetivo aleatorio
                 this.calculatePath(this.currentTarget);
-                this.character.kinematicSteering.velocity = new Vector(0, 0); // Detener al personaje
+                this.character.kinematicSteering.velocity = new Vector(0, 0);
+                 // Detener al personaje
             }
         }
 
@@ -134,7 +140,7 @@ export class ExploreState extends State {
 
     drawRoute() {
         this.routeGraphics.clear(); // Limpiar gráficos anteriores
-        this.routeGraphics.lineStyle(2, 0x00ff00, 1); // Estilo de línea verde
+        this.routeGraphics.lineStyle(2, 0xffff00, 1); // Estilo de línea verde
 
         if (!this.shortestPath || this.shortestPath.length === 0) {
             return;

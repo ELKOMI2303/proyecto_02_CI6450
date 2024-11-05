@@ -83,14 +83,14 @@ export class DetectState extends State {
             orientation: this.character.kinematicSteering.orientation // Mantener la orientación actual
         };
 
-        const seekBehavior = new Seek(this.character.kinematicSteering, targetKinematic, 20); // Aceleración máxima de 20
+        const seekBehavior = new Seek(this.character.kinematicSteering, targetKinematic, 40); // Aceleración máxima de 20
         const steering = seekBehavior.getSteering();
 
         if (this.isCollidingWithWall(this.character.kinematicSteering.position, steering.linear)) {
             steering.linear = this.avoidWall(steering.linear);
         }
 
-        this.character.kinematicSteering.update(steering, this.currentFrame, 20);
+        this.character.kinematicSteering.update(steering, this.currentFrame, 40);
 
         const currentPosition = this.character.kinematicSteering.position;
         const directionX = targetX - currentPosition.x;
@@ -109,7 +109,7 @@ export class DetectState extends State {
 
     drawRoute() {
         this.routeGraphics.clear();
-        this.routeGraphics.lineStyle(4, 0x00ffff, 1);
+        this.routeGraphics.lineStyle(2, 0x00ffff, 1);
 
         if (!this.shortestPath || this.shortestPath.length === 0) {
             return;

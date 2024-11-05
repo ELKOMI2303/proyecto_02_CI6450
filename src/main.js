@@ -121,7 +121,7 @@ function startPhaserGame(option) {
 
     // Crear un objeto Graphics para dibujar los nodos
     const graphics = this.add.graphics();
-    graphics.fillStyle(0xff9999, 0.75); // Color rojo para los puntos
+    graphics.fillStyle(0xff9999, 0.50); // Color rojo para los puntos
 
     // Primero, añadir todos los nodos
     for (let y = 0; y < mapHeight; y++) {
@@ -481,7 +481,7 @@ function startPhaserGame(option) {
     this.stateMachine2 = new StateMachine(patrol);
     //#######################################CHARACTER 3 #########################################
     const characterSprite3 = this.physics.add
-    .sprite(15 * 16, 22 * 16, "trainer3")
+    .sprite(15 * 16, 4 * 16, "trainer3")
     .setScale(0.35);
   this.character3 = characterSprite3;
 
@@ -626,6 +626,12 @@ function startPhaserGame(option) {
     character1.y = kinematiccharacter1.kinematicSteering.position.y;
 
     setRotation1(kinematiccharacter1.kinematicSteering.orientation, character1);
+    if(this.kinematiccharacter1.kinematicSteering.velocity.x===0 &&this.kinematiccharacter1.kinematicSteering.velocity.y===0)
+      character1.anims.stop();
+
+
+    this.kinematiccharacter1.character.exclamationMark.x = character1.x;
+    this.kinematiccharacter1.character.exclamationMark.y=  character1.y - 20;
 //##############################CHARACTER 2#########################################################
     // Aquí actualizamos la máquina de estados
     const actions2 = this.stateMachine2.update();
@@ -635,6 +641,11 @@ function startPhaserGame(option) {
 
     character2.x = kinematiccharacter2.kinematicSteering.position.x;
     character2.y = kinematiccharacter2.kinematicSteering.position.y;
+    this.kinematiccharacter2.character.exclamationMark.x = character2.x;
+    this.kinematiccharacter2.character.exclamationMark.y=  character2.y - 20;
+
+    if(this.kinematiccharacter2.kinematicSteering.velocity.x===0 &&this.kinematiccharacter2.kinematicSteering.velocity.y===0)
+      character2.anims.stop();
 
     setRotation2(kinematiccharacter2.kinematicSteering.orientation, character2);
 
@@ -646,6 +657,9 @@ function startPhaserGame(option) {
 
     character3.x = kinematiccharacter3.kinematicSteering.position.x;
     character3.y = kinematiccharacter3.kinematicSteering.position.y;
+    if(this.kinematiccharacter3.kinematicSteering.velocity.x===0 &&this.kinematiccharacter3.kinematicSteering.velocity.y===0)
+      character3.anims.stop();
+  
 
     setRotation3(kinematiccharacter3.kinematicSteering.orientation, character3);
 //###############################################################################
@@ -667,9 +681,9 @@ function setRotation2(orientation, character) {
   if (orientation >= -Math.PI / 4 && orientation < Math.PI / 4) {
     character.anims.play("walk_right2", true); // Derecha
   } else if (orientation >= Math.PI / 4 && orientation < (3 * Math.PI) / 4) {
-    character.anims.play("walk_up2", true); // Arriba
+    character.anims.play("walk_down2", true); // Arriba
   } else if (orientation >= (-3 * Math.PI) / 4 && orientation < -Math.PI / 4) {
-    character.anims.play("walk_down2", true); // Abajo
+    character.anims.play("walk_up2", true); // Abajo
   } else {
     character.anims.play("walk_left2", true); // Izquierda
   }
@@ -680,9 +694,9 @@ function setRotation1(orientation, character) {
   if (orientation >= -Math.PI / 4 && orientation < Math.PI / 4) {
     character.anims.play("walk_right1", true); // Derecha
   } else if (orientation >= Math.PI / 4 && orientation < (3 * Math.PI) / 4) {
-    character.anims.play("walk_up1", true); // Arriba
+    character.anims.play("walk_down1", true); // Arriba
   } else if (orientation >= (-3 * Math.PI) / 4 && orientation < -Math.PI / 4) {
-    character.anims.play("walk_down1", true); // Abajo
+    character.anims.play("walk_up1", true); // Abajo
   } else {
     character.anims.play("walk_left1", true); // Izquierda
   }
@@ -693,9 +707,9 @@ function setRotation3(orientation, character) {
   if (orientation >= -Math.PI / 4 && orientation < Math.PI / 4) {
     character.anims.play("walk_right3", true); // Derecha
   } else if (orientation >= Math.PI / 4 && orientation < (3 * Math.PI) / 4) {
-    character.anims.play("walk_up3", true); // Arriba
+    character.anims.play("walk_down3", true); // Arriba
   } else if (orientation >= (-3 * Math.PI) / 4 && orientation < -Math.PI / 4) {
-    character.anims.play("walk_down3", true); // Abajo
+    character.anims.play("walk_up3", true); // Abajo
   } else {
     character.anims.play("walk_left3", true); // Izquierda
   }
