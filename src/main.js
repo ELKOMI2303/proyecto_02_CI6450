@@ -600,16 +600,16 @@ function startPhaserGame(option) {
     if (!collides) {
       // Si no hay colisión, permitir el movimiento del jugador
       if (cursors.left.isDown) {
-        player.setVelocityX(-160);
+        player.setVelocityX(-80);
         player.anims.play("walk_left", true);
       } else if (cursors.right.isDown) {
-        player.setVelocityX(160);
+        player.setVelocityX(80);
         player.anims.play("walk_right", true);
       } else if (cursors.up.isDown) {
-        player.setVelocityY(-160);
+        player.setVelocityY(-80);
         player.anims.play("walk_up", true);
       } else if (cursors.down.isDown) {
-        player.setVelocityY(160);
+        player.setVelocityY(80);
         player.anims.play("walk_down", true);
       } else {
         player.anims.stop();
