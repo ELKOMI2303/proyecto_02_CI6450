@@ -22,7 +22,7 @@ npm install
 ```
 
 ## Inicialización
-Para inicializar el proyecto, ejecuta el siguiente comando en la terminalÑ
+Para inicializar el proyecto, ejecuta el siguiente comando en la terminal:
 
 ```bash
 npm run dev
